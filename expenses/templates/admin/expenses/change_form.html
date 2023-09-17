@@ -1,0 +1,27 @@
+{% extends "admin/change_form.html" %} {% load i18n admin_urls static
+admin_modify %} {% load static %} {% block extrahead %} {{ block.super }}
+<script
+  type="text/javascript"
+  src="{% static 'custom_datetime_widget.js' %}"
+></script>
+<script>
+  // MAKE DELETED FORMS READONLY
+  document.addEventListener("DOMContentLoaded", function () {
+    setDeletedReadOnly();
+  });
+
+  const setDeletedReadOnly = () => {
+    const deleted = {{ original.deleted|yesno:"true,false" }};
+    const form = document.querySelector("form");
+    if (deleted) {
+      const formElements = document.querySelectorAll("input, textarea, select");
+
+      formElements.forEach((element) => {
+        element.disabled = true;
+        element.style.cursor = "not-allowed";
+      });
+    }
+  };
+</script>
+
+{% endblock %}

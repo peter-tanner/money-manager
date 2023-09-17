@@ -1,0 +1,62 @@
+<!-- sales/templates/admin/sale_summary_change_list.html -->
+
+{% extends "admin/change_list.html" %} {% block content_title %}{% load humanize
+%}{% load month_name %}
+<h1>Sales Summary</h1>
+{% endblock %} {% block result_list %}
+
+<div class="results">
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <div class="text">
+            <a href="#">Category</a>
+          </div>
+        </th>
+        <th>
+          <div class="text">
+            <a href="#">Total</a>
+          </div>
+        </th>
+        <th>
+          <div class="text">
+            <a href="#">Total Sales</a>
+          </div>
+        </th>
+        <th>
+          <div class="text">
+            <a href="#">
+              <strong>% Of Total Sales</strong>
+            </a>
+          </div>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row in summary %}
+      <tr class="{% cycle 'row1' 'row2' %}">
+        <td>{{ row.month|date:"M Y" }}</td>
+        <td>{{ row.total }}</td>
+        <td>${{ row.total_sales|floatformat:3 }}</td>
+        <td>
+          <strong>
+            {{ row.total_sales | default:0 | percentof:summary_total.total_sales
+            }}
+          </strong>
+        </td>
+      </tr>
+
+      {% endfor %}
+    </tbody>
+    <tr style="font-weight: bold; border-top: 2px solid #dddddd">
+      <td>Total</td>
+      <td>{{ summary_total.total }}</td>
+      <td>${{ summary_total.total_sales|floatformat:3}}</td>
+      <td>100%</td>
+    </tr>
+  </table>
+</div>
+
+{% endblock %} {% block pagination %}{% endblock %}

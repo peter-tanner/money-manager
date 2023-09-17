@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from expenses.models import Expense, Timesheet
+
 
 urlpatterns = [
     path("admin/expenses/", include("expenses.admin_urls")),
@@ -24,6 +26,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 ]
 
-admin.site.site_header = "Better Admin"
-admin.site.index_title = "Better Admin"
+admin.site.site_header = "Yet another money manager"
+admin.site.index_title = f"Handling {Expense.objects.all().count() + Timesheet.objects.all().count()} documents..."
 admin.site.site_title = ""

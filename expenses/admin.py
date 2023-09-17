@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 from typing import Any, Dict
 from django.contrib import admin
 from django.contrib.admin.options import ModelAdmin
@@ -11,7 +12,7 @@ from django.db import models
 from util import next_payday
 
 from .admin_base import AdminBase, DeletedListFilter, DeletableAdminForm
-from .models import Expense, Timesheet, TimesheetRate
+from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate
 from django import forms
 from django.utils import timezone
 from django.contrib.admin.widgets import AdminDateWidget, AdminSplitDateTime
@@ -110,10 +111,15 @@ class TimesheetAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
             return {}
 
         # Cannot reorder the queryset at this point
-        earliest = min([x.shift_start for x in queryset])
+        earliest = min([x.shift_start for x in queryset]).replace(day=1)
+
+        expenses_in_range = Expense.objects.filter(
+            date__range=[earliest, timezone.now()]
+        )
 
         labels = []
         totals = []
+        expenses_total = []
         for b in months_between_dates(earliest, timezone.now()):
             labels.append(b.strftime("%b %Y"))
             totals.append(
@@ -126,6 +132,15 @@ class TimesheetAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                     ]
                 )
             )
+            expenses_total.append(
+                sum(
+                    [
+                        convert_money(x.price, "AUD").amount
+                        for x in expenses_in_range
+                        if x.date.year == b.year and x.date.month == b.month
+                    ]
+                )
+            )
 
         return {
             "labels": labels,
@@ -134,6 +149,11 @@ class TimesheetAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                     "label": "Income (Pre-tax)",
                     "data": totals,
                     "backgroundColor": "#79aec8",
+                },
+                {
+                    "label": "Expenditure",
+                    "data": expenses_total,
+                    "backgroundColor": "#865137",
                 },
             ],
         }
@@ -149,8 +169,8 @@ class ExpenseAdminForm(DeletableAdminForm):
 class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
     form = ExpenseAdminForm
 
-    list_display = ("date", "price", "description")
-    list_filter = ("date", ("deleted", DeletedListFilter))
+    list_display = ("date", "price", "description", "category")
+    list_filter = ("date", ("deleted", DeletedListFilter), "category")
     ordering = ("-date", "-deleted")
     readonly_fields = ("deleted",)
 
@@ -163,3 +183,67 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
     list_chart_data = {}
     list_chart_options = {"aspectRatio": 6}
     list_chart_config = None  # Override the combined settings
+
+    def get_list_chart_data(self, queryset):
+        if not queryset:
+            return {}
+
+        # Cannot reorder the queryset at this point
+        earliest = min([x.date for x in queryset]).replace(day=1)
+        timesheets = Timesheet.objects.filter(
+            shift_start__range=[earliest, timezone.now()]
+        )
+
+        labels = []
+        totals = []
+        expenses_total = []
+        expenses = {
+            k: {
+                "label": k,
+                "data": [0],
+                "backgroundColor": f"#{random.Random(x=1).randrange(0x1000000):06x}",
+            }
+            for k in set([x.category.name for x in queryset])
+        }
+        for b in months_between_dates(earliest, timezone.now().date()):
+            labels.append(b.strftime("%b %Y"))
+            totals.append(
+                sum(
+                    [
+                        convert_money(x.total, "AUD").amount
+                        for x in timesheets
+                        if x.shift_start.year == b.year
+                        and x.shift_start.month == b.month
+                    ]
+                )
+            )
+            expenses_total.append(0)
+            for x in queryset:
+                if x.date.year == b.year and x.date.month == b.month:
+                    expenses_total[-1] += convert_money(x.price, "AUD").amount
+                    expenses[x.category.name]["data"][-1] += convert_money(
+                        x.price, "AUD"
+                    ).amount
+
+        print(list(expenses))
+        return {
+            "labels": labels,
+            "datasets": [
+                {
+                    "label": "Income (Pre-tax)",
+                    "data": totals,
+                    "backgroundColor": "#79aec8",
+                },
+                {
+                    "label": "Expenditure",
+                    "data": expenses_total,
+                    "backgroundColor": "#865137",
+                },
+            ]
+            + list(expenses.values()),
+        }
+
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(AdminBase):
+    pass

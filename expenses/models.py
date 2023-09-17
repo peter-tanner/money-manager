@@ -103,10 +103,9 @@ class Timesheet(DeletableModel):
 class ExpenseCategory(DeletableModel):
     name = models.TextField(blank=True)
     description = models.TextField(blank=True)
-    default_rate = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name
+        return truncate_string(self.name, 48)
 
 
 class Expense(DeletableModel):

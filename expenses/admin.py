@@ -12,7 +12,7 @@ from django.db import models
 from util import next_payday
 
 from .admin_base import AdminBase, DeletedListFilter, DeletableAdminForm
-from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate
+from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate, Vendor
 from django import forms
 from django.utils import timezone
 from django.contrib.admin.widgets import AdminDateWidget, AdminSplitDateTime
@@ -21,6 +21,21 @@ from import_export.admin import ImportExportModelAdmin
 from admincharts.admin import AdminChartMixin
 from admincharts.utils import months_between_dates
 from djmoney.contrib.exchange.models import convert_money
+
+
+class VendorAdminForm(DeletableAdminForm):
+    class Meta:
+        model = Vendor
+        fields = "__all__"
+
+
+@admin.register(Vendor)
+class VendorAdmin(AdminBase):
+    list_display = (
+        "name",
+        "description",
+    )
+    form = VendorAdminForm
 
 
 class TimesheetRateAdminForm(DeletableAdminForm):
@@ -169,8 +184,8 @@ class ExpenseAdminForm(DeletableAdminForm):
 class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
     form = ExpenseAdminForm
 
-    list_display = ("date", "price", "description", "category")
-    list_filter = ("date", ("deleted", DeletedListFilter), "category")
+    list_display = ("date", "price", "description", "category", "vendor")
+    list_filter = ("date", ("deleted", DeletedListFilter), "category", "vendor")
     ordering = ("-date", "-deleted")
     readonly_fields = ("deleted",)
 

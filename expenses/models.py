@@ -108,6 +108,14 @@ class ExpenseCategory(DeletableModel):
         return truncate_string(self.name, 48)
 
 
+class Vendor(DeletableModel):
+    name = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return truncate_string(self.name, 48)
+
+
 class Expense(DeletableModel):
     price = MoneyField(
         decimal_places=3,
@@ -117,7 +125,13 @@ class Expense(DeletableModel):
     )
     date = models.DateField()
     description = models.TextField(blank=True)
-    merchant = models.CharField(max_length=255, blank=True)
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="expenses",
+    )
     receipt = models.FileField(upload_to="receipts/", blank=True)
     link = models.URLField(blank=True)
     category = models.ForeignKey(

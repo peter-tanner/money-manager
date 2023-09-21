@@ -14,9 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
 from expenses.models import Expense, Timesheet
 
 
@@ -25,6 +26,8 @@ urlpatterns = [
     path("admin/summary/", include("summary.urls")),
     path("admin/", admin.site.urls),
 ]
+if not settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 admin.site.site_header = "Yet another money manager"
 admin.site.index_title = f"Handling {Expense.objects.all().count() + Timesheet.objects.all().count()} documents..."

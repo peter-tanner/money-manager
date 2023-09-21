@@ -114,7 +114,7 @@ class TimesheetAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
         earliest = min([x.shift_start for x in queryset]).replace(day=1)
 
         expenses_in_range = Expense.objects.filter(
-            date__range=[earliest, timezone.now()]
+            date__range=[earliest, timezone.now()], deleted=False
         )
 
         labels = []
@@ -200,7 +200,7 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
         expenses = {
             k: {
                 "label": k,
-                "data": [0],
+                "data": [],
                 "backgroundColor": f"#{random.Random(x=1).randrange(0x1000000):06x}",
             }
             for k in set([x.category.name for x in queryset])
@@ -218,6 +218,8 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                 )
             )
             expenses_total.append(0)
+            for k in expenses.keys():
+                expenses[k]["data"].append(0)
             for x in queryset:
                 if x.date.year == b.year and x.date.month == b.month:
                     expenses_total[-1] += convert_money(x.price, "AUD").amount
@@ -225,7 +227,6 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                         x.price, "AUD"
                     ).amount
 
-        print(list(expenses))
         return {
             "labels": labels,
             "datasets": [

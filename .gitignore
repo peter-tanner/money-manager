@@ -1,5 +1,7 @@
 etc/
 test.py
+localhost_config.py
+static/
 
 
 # Byte-compiled / optimized / DLL files

@@ -1,26 +1,34 @@
-from datetime import datetime, timedelta
-import random
-from typing import Any, Dict
+from datetime import datetime
+import distinctipy
 from django.contrib import admin
-from django.contrib.admin.options import ModelAdmin
-from django.core.handlers.wsgi import WSGIRequest
-from django.db.models.base import Model
-from django.db.models.fields import Field
-from django.forms import DecimalField, TextInput, NumberInput
-from django.db import models
 
-from util import next_payday
+from util import next_payday, rgb_tuple_to_hex
 
 from .admin_base import AdminBase, DeletedListFilter, DeletableAdminForm
-from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate
+from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate, Vendor
 from django import forms
 from django.utils import timezone
-from django.contrib.admin.widgets import AdminDateWidget, AdminSplitDateTime
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from admincharts.admin import AdminChartMixin
 from admincharts.utils import months_between_dates
 from djmoney.contrib.exchange.models import convert_money
+
+
+class VendorAdminForm(DeletableAdminForm):
+    class Meta:
+        model = Vendor
+        fields = "__all__"
+
+
+@admin.register(Vendor)
+class VendorAdmin(AdminBase):
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = ("name",)
+    form = VendorAdminForm
 
 
 class TimesheetRateAdminForm(DeletableAdminForm):
@@ -169,8 +177,9 @@ class ExpenseAdminForm(DeletableAdminForm):
 class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
     form = ExpenseAdminForm
 
-    list_display = ("date", "price", "description", "category")
-    list_filter = ("date", ("deleted", DeletedListFilter), "category")
+    autocomplete_fields = ("vendor", "category")
+    list_display = ("date", "price", "description", "category", "vendor")
+    list_filter = ("date", ("deleted", DeletedListFilter), "category", "vendor")
     ordering = ("-date", "-deleted")
     readonly_fields = ("deleted",)
 
@@ -197,14 +206,22 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
         labels = []
         totals = []
         expenses_total = []
-        expenses = {
-            k: {
-                "label": k,
-                "data": [],
-                "backgroundColor": f"#{random.Random(x=1).randrange(0x1000000):06x}",
-            }
-            for k in set([x.category.name for x in queryset])
-        }
+        expense_types = set([x.category.name for x in queryset])
+        colors = distinctipy.get_colors(len(expense_types), pastel_factor=0.2, rng=69)
+        expenses = {}
+        i = 0
+        for k in expense_types:
+            expenses.update(
+                {
+                    k: {
+                        "label": k,
+                        "data": [],
+                        "backgroundColor": rgb_tuple_to_hex(colors[i]),
+                    }
+                }
+            )
+            i += 1
+
         for b in months_between_dates(earliest, timezone.now().date()):
             labels.append(b.strftime("%b %Y"))
             totals.append(
@@ -213,7 +230,7 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                         convert_money(x.total, "AUD").amount
                         for x in timesheets
                         if x.shift_start.year == b.year
-                        and x.shift_start.month == b.month
+                        and x.shift_start.month == b.month  # noqa
                     ]
                 )
             )
@@ -241,10 +258,10 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
                     "backgroundColor": "#865137",
                 },
             ]
-            + list(expenses.values()),
+            + list(expenses.values()),  # noqa
         }
 
 
 @admin.register(ExpenseCategory)
 class ExpenseCategoryAdmin(AdminBase):
-    pass
+    search_fields = ("name",)

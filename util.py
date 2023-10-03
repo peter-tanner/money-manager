@@ -33,3 +33,11 @@ def next_payday(day=datetime.now()) -> datetime:
     next_payday -= timedelta(days=1)
 
     return next_payday
+
+
+def rgb_tuple_to_hex(rgb_tuple):
+    # Ensure the values are within the valid range
+    color = [min(max(0, x), 1) for x in rgb_tuple]
+    color = [format(int(x * 255), "02x") for x in color]
+    rgb_hex = f"#{color[0]}{color[1]}{color[2]}"
+    return rgb_hex

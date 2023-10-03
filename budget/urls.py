@@ -17,11 +17,12 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, reverse_lazy
 from expenses.models import Expense, Timesheet
-
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
+    path("", RedirectView.as_view(url=reverse_lazy("admin:index"))),
     path("admin/expenses/", include("expenses.admin_urls")),
     path("admin/summary/", include("summary.urls")),
     path("admin/", admin.site.urls),

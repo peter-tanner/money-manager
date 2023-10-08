@@ -52,6 +52,11 @@ class TodosAdmin(AdminBase):
         F("due_date").asc(nulls_last=True),
         "-priority",
     )
+    list_filter = (
+        "priority",
+        "due_date",
+        ("deleted", DeletedListFilter),
+    )
     form = TodosAdminForm
 
     # def bump_priority(self, obj):

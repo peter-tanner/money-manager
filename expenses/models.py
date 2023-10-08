@@ -41,6 +41,14 @@ class Todo(DeletableModel):
         return f"{self.title} [{self.due_date}]"
 
 
+class LogCategory(DeletableModel):
+    name = models.CharField(max_length=256, blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return truncate_string(self.name, 48)
+
+
 class Log(DeletableModel):
     # TODO: Use Markdown formatting!
     title = models.CharField(max_length=256, blank=True)
@@ -53,6 +61,13 @@ class Log(DeletableModel):
         ),
     )
     information = models.TextField(blank=True)
+    category = models.ForeignKey(
+        LogCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="logs",
+    )
 
     def __str__(self):
         return f"{self.date}: {self.title}"

@@ -9,6 +9,7 @@ from .models import (
     Log,
     Expense,
     ExpenseCategory,
+    LogCategory,
     Timesheet,
     TimesheetRate,
     Todo,
@@ -91,6 +92,7 @@ class LogsAdmin(AdminBase):
         "truncated_title",
         "date",
         "goodness_value",
+        "category",
     )
     list_display_links = (
         "title",
@@ -99,6 +101,11 @@ class LogsAdmin(AdminBase):
     search_fields = (
         "title",
         "date",
+        "category",
+    )
+    list_filter = (
+        "date",
+        # "category",
     )
     form = LogsAdminForm
 
@@ -352,4 +359,20 @@ class ExpenseAdmin(AdminBase, AdminChartMixin, ImportExportModelAdmin):
 
 @admin.register(ExpenseCategory)
 class ExpenseCategoryAdmin(AdminBase):
-    search_fields = ("name",)
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = list_display
+
+
+@admin.register(LogCategory)
+class LogCategoryAdmin(AdminBase):
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = list_display
+
+    class Media:
+        css = {"all": ("/static/logs.css",)}

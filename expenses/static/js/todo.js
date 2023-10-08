@@ -63,7 +63,9 @@ function parseDateString(dateString) {
 }
 
 const alerted = new Set();
-const deletedParam = urlParams.get("deleted__exact");
+const url = new URL(window.location.href);
+const urlParams = new URLSearchParams(url.search);
+const deletedParam = urlParams.get("deleted__exact") || false;
 
 // DO NOT NOTIFY FOR DELETED ITEMS
 if (deletedParam !== "1") {

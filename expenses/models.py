@@ -31,6 +31,16 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 #     actions = [soft_delete_selected]
 
 
+class Todo(DeletableModel):
+    title = models.CharField(max_length=256, blank=True)
+    description = models.TextField(blank=True)
+    due_date = models.DateTimeField(null=True, blank=True)
+    priority = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.title} [{self.due_date}]"
+
+
 class Log(DeletableModel):
     # TODO: Use Markdown formatting!
     title = models.CharField(max_length=256, blank=True)

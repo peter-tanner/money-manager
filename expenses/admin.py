@@ -5,7 +5,15 @@ from django.contrib import admin
 from util import next_payday, rgb_tuple_to_hex
 
 from .admin_base import AdminBase, DeletedListFilter, DeletableAdminForm
-from .models import Log, Expense, ExpenseCategory, Timesheet, TimesheetRate, Vendor
+from .models import (
+    Log,
+    Expense,
+    ExpenseCategory,
+    Timesheet,
+    TimesheetRate,
+    Todo,
+    Vendor,
+)
 from django import forms
 from django.utils import timezone
 from import_export import resources
@@ -14,6 +22,49 @@ from admincharts.admin import AdminChartMixin
 from admincharts.utils import months_between_dates
 from djmoney.contrib.exchange.models import convert_money
 from django.utils.html import format_html
+from django.db.models import F
+
+
+class TodosAdminForm(DeletableAdminForm):
+    class Meta:
+        model = Todo
+        fields = "__all__"
+
+
+@admin.register(Todo)
+class TodosAdmin(AdminBase):
+    class Media:
+        js = ("js/todo.js",)
+
+    # TODO: add stats bars for resolved/completed reports
+    list_display = (
+        "title",
+        "due_date",
+        "priority",
+        # "bump_priority",
+    )
+    search_fields = (
+        "title",
+        "due_date",
+        "priority",
+    )
+    ordering = (
+        F("due_date").asc(nulls_last=True),
+        "-priority",
+    )
+    form = TodosAdminForm
+
+    # def bump_priority(self, obj):
+    #     return format_html(
+    #         "<button class='button' onclick=`doSomething({})`>+</button>",
+    #         obj.id,
+    #         obj.id,
+    #     )
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context = {"title": "SHIT TODO"}
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 class LogsAdminForm(DeletableAdminForm):

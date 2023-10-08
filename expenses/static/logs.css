@@ -1,0 +1,12 @@
+/* Hide title of log when mouse is not hovering over it for privacy */
+.field-title:not(:hover) > a {
+  color: transparent;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.field-goodness_value:not(:hover) {
+  color: transparent;
+  text-decoration: none;
+  cursor: pointer;
+}

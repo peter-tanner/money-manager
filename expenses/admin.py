@@ -5,7 +5,7 @@ from django.contrib import admin
 from util import next_payday, rgb_tuple_to_hex
 
 from .admin_base import AdminBase, DeletedListFilter, DeletableAdminForm
-from .models import Expense, ExpenseCategory, Timesheet, TimesheetRate, Vendor
+from .models import Log, Expense, ExpenseCategory, Timesheet, TimesheetRate, Vendor
 from django import forms
 from django.utils import timezone
 from import_export import resources
@@ -13,6 +13,38 @@ from import_export.admin import ImportExportModelAdmin
 from admincharts.admin import AdminChartMixin
 from admincharts.utils import months_between_dates
 from djmoney.contrib.exchange.models import convert_money
+from django.utils.html import format_html
+
+
+class LogsAdminForm(DeletableAdminForm):
+    class Meta:
+        model = Log
+        fields = "__all__"
+
+
+@admin.register(Log)
+class LogsAdmin(AdminBase):
+    class Media:
+        css = {"all": ("/static/logs.css",)}
+
+    def truncated_title(self, instance):
+        return f"{instance.title[:2]}...{instance.title[-1:]}"
+
+    list_display = (
+        "title",
+        "truncated_title",
+        "date",
+        "goodness_value",
+    )
+    list_display_links = (
+        "title",
+        "truncated_title",
+    )
+    search_fields = (
+        "title",
+        "date",
+    )
+    form = LogsAdminForm
 
 
 class VendorAdminForm(DeletableAdminForm):

@@ -1,12 +1,13 @@
 # nah i don't think i want you to have my receipts thanks...
 receipts/
 receipts/*
+db_backup/
 
 
 etc/
 test.py
 localhost_config.py
-static/
+/static/
 
 
 # Byte-compiled / optimized / DLL files

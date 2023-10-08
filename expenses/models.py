@@ -4,7 +4,8 @@ from django.utils import timezone
 from djmoney.models.fields import MoneyField, Money
 from .deletable_model import DeletableModel
 from util import truncate_string  # new line
-from django.db.models import Q
+from django.db.models import Q, CheckConstraint
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 # class ExpenseManager(models.Manager):
 #     def active(self):
@@ -28,6 +29,32 @@ from django.db.models import Q
 #     soft_delete_selected.short_description = "Soft delete selected entries"
 
 #     actions = [soft_delete_selected]
+
+
+class Log(DeletableModel):
+    # TODO: Use Markdown formatting!
+    title = models.CharField(max_length=256, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
+    goodness_value = models.FloatField(
+        default=0.0,
+        validators=(
+            MinValueValidator(-10.0),
+            MaxValueValidator(10.0),
+        ),
+    )
+    information = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.date}: {self.title}"
+
+    class Meta:
+        constraints = (
+            # for checking in the DB
+            CheckConstraint(
+                check=Q(goodness_value__gte=-10.0) & Q(goodness_value__lte=10.0),
+                name="log_goodness_value_range",
+            ),
+        )
 
 
 class TimesheetRate(DeletableModel):
@@ -141,6 +168,7 @@ class Expense(DeletableModel):
         blank=True,
         related_name="expenses",
     )
+    cash = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.date} {self.price} {truncate_string(self.description,32)}"
